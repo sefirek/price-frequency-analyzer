@@ -1,0 +1,49 @@
+{
+  "name": "price-frequency-analyzer",
+  "version": "1.0.0",
+  "description": "Analiza różnych częstotliwości ceny na wykresie ",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "server": "node ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sefirek/price-frequency-analyzer.git"
+  },
+  "keywords": [
+    "analiza",
+    "cena",
+    "fft"
+  ],
+  "author": "sefirek mati900607",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sefirek/price-frequency-analyzer/issues"
+  },
+  "homepage": "https://github.com/sefirek/price-frequency-analyzer#readme",
+  "dependencies": {
+    "chokidar": "^3.5.2",
+    "consola": "^2.15.0",
+    "cors": "^2.8.5",
+    "dygraphs": "^2.1.0",
+    "eslint": "^7.11.0",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-chai-expect": "^2.1.0",
+    "eslint-plugin-chai-friendly": "^0.5.0",
+    "eslint-plugin-chai-register": "https://github.com/sefirek/eslint-plugin-chai-register.git",
+    "eslint-plugin-import": "^2.19.1",
+    "eslint-plugin-jsdoc": "^20.0.0",
+    "eslint-plugin-jsx-a11y": "^6.2.1",
+    "eslint-plugin-mocha": "^6.2.2",
+    "eslint-plugin-react": "^7.17.0",
+    "express": "^4.17.1",
+    "fft": "https://github.com/sefirek/fft.git",
+    "fileio": "https://github.com/sefirek/FileIO.git",
+    "jsdoc": "^3.6.6"
+  },
+  "devDependencies": {
+    "babel-eslint": "^10.1.0"
+  }
+}
