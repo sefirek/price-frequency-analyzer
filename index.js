@@ -1,4 +1,5 @@
 const express = require('express');
+const fs = require('fs');
 const watchingChanges = require('./watchingChanges');
 
 const app = express();
@@ -10,6 +11,19 @@ const responders = [];
 app.use('/css', express.static(`${__dirname}/${publicFolder}/css`));
 app.use('/js', express.static(`${__dirname}/${publicFolder}/js`));
 app.use('/img', express.static(`${__dirname}/${publicFolder}/img`));
+app.use('/data', express.static(`${__dirname}/data`));
+// app.use('/js/dygraphs', express.static(`${__dirname}/node_modules/dygraphs/src`));
+app.get('/js/dygraphs/*', (req, res) => {
+  const fileName = `${__dirname}/node_modules/dygraphs/src${req.url.split('/js/dygraphs')[1]}.js`;
+
+  if (fs.existsSync(fileName)) {
+    res.sendFile(fileName);
+  } else {
+    res.sendStatus(404);
+  }
+  // console.log(fileName);
+  // console.log(req.url);
+});
 app.get('/', (req, res) => {
   res.sendFile(`${__dirname}/${publicFolder}/index.html`);
 });

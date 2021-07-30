@@ -1,3 +1,5 @@
+import Dygraph from './dygraphs/dygraph';
+
 /**
  *
  */
@@ -8,3 +10,9 @@ function waitForUpdate() {
 }
 
 waitForUpdate();
+
+const g1 = new Dygraph(
+  document.body,
+  '/data/EURUSD5.csv', // path to CSV file
+  {}, // options
+);
