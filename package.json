@@ -41,7 +41,10 @@
     "express": "^4.17.1",
     "fft": "https://github.com/sefirek/fft.git",
     "fileio": "https://github.com/sefirek/FileIO.git",
-    "jsdoc": "^3.6.6"
+    "jsdoc": "^3.6.6",
+    "node-fetch": "^2.6.1",
+    "nodemailer": "^6.6.5",
+    "synaptic": "^1.1.4"
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0"

@@ -1,0 +1,35 @@
+:root {
+  --left-offset: 60px;
+  --row-gap: 5px;
+}
+
+.chart-panel {
+  padding-left: var(--left-offset);
+  padding-top: var(--row-gap);
+  padding-bottom: var(--row-gap);
+}
+
+.chart-scrollbar > input {
+  width: calc(480px - var(--left-offset));
+}
+
+.chart-date-navigation {
+  display: none;
+  /*display: flex;*/
+  align-items: center;
+  column-gap: 10px;
+}
+
+.dygraph-legend {
+  transform: translateX(100%);
+  margin-left: 10px;
+}
+
+.draw-bar {
+  padding-top: var(--row-gap);
+  padding-left: var(--left-offset);
+}
+
+.button-container {
+  margin-top: var(--row-gap);
+}

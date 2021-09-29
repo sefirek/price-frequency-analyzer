@@ -6,9 +6,66 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Price frequency analyzer</title>
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/dygraph/2.1.0/dygraph.min.css" />
+  <link rel="stylesheet" href="css/index.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/synaptic/1.0.4/synaptic.js" integrity="sha512-t/iCO9KLOIT7UYsr+8yB5ZgmkJ3lmAhzwRfigVAZy9P4sRkEqujnsPvBUFCCOveBUWPm5N0rKKOWMGGK/OmGvw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script type="module" src="js/index.js"></script>
 </head>
 <body>
-  
+  <main>
+    <div class="charts">
+      <div class="chart-data">
+        <div class="chart-canvas">
+
+        </div>
+      </div>
+      <div class="chart-panel">
+        <div class="chart-scrollbar">
+          <input type="range" min="0" max="0" value="0" />
+        </div>
+        <div class="chart-date-navigation">
+          <div class="chart-date">
+            <span>Date:</span>
+            <input type="date" name="date" />
+          </div>
+          <div class="chart-month">
+            <span>Month:</span>
+            <select name="month">
+              <option value="1">January</option>
+              <option value="2">February</option>
+              <option value="3">March</option>
+              <option value="4">April</option>
+              <option value="5">May</option>
+              <option value="6">June</option>
+              <option value="7">July</option>
+              <option value="8">August</option>
+              <option value="9">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="chart-data">
+        <div class="chart-canvas">
+
+        </div>
+      </div>
+      <div class="panel-bottom">
+        <div class="button-container">
+          <button name="pause">Pause</button>
+          <button name="test">Test</button>
+          <button name="train">Train</button>
+          <button name="create-new">Create new</button>
+        </div>
+        <div class="date-container">
+          <select name="trade-date" id="trade-date">
+    
+          </select>
+        </div>
+      </div>
+    </div>
+    <button name="grant-permissions">Grant permissions</button>
+  </main>
 </body>
 </html>
