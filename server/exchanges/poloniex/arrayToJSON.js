@@ -8,7 +8,13 @@ function arrayToJSON(array) {
     const time = new Date();
     time.setTime(record.date * 1000);
     if (!Number.isNaN(time.getTime())) {
-      json.push({ time, close: Number.parseFloat(record.close) });
+      json.push({
+        time,
+        open: Number.parseFloat(record.open),
+        high: Number.parseFloat(record.high),
+        low: Number.parseFloat(record.low),
+        close: Number.parseFloat(record.close),
+      });
     }
   });
   return json;

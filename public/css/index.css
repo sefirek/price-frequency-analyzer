@@ -30,6 +30,59 @@
   padding-left: var(--left-offset);
 }
 
-.button-container {
-  margin-top: var(--row-gap);
+.panel-bottom {
+  display: flex;
+  flex-direction: column;
+  margin-top: calc(var(--row-gap) * 2);
+  row-gap: var(--row-gap);
+}
+
+.generate-database-container {
+  display: flex;
+  column-gap: var(--row-gap);
+}
+
+@keyframes generatingInProgress {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(359.999999deg);
+  }
+}
+
+.generate-database-container i {
+  position: absolute;
+  visibility: hidden;
+}
+
+.generate-database-info {
+  display: initial;
+}
+
+.generate-database-info[data-type="success"] {
+  color: darkgreen;
+}
+
+.generate-database-info[data-type="error"] {
+  color: darkred;
+}
+
+.generate-database-container[data-in-progress="true"] i {
+  position: initial;
+  visibility: visible;
+  animation: generatingInProgress 1s linear infinite;
+}
+
+.generate-database-container[data-in-progress="true"] .generate-database-info {
+  display: none;
+}
+
+input[name="generate-symbol"] {
+  text-transform: uppercase;
+  width: 120px;
+}
+
+input[name="generate-symbol"]::placeholder {
+  text-transform: none;
 }

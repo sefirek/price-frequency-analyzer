@@ -1,5 +1,4 @@
 const fs = require('fs');
-const fetch = require('node-fetch');
 const EXCHANGES = require('./exchanges/Exchanges');
 
 const cwd = process.cwd();
@@ -13,7 +12,7 @@ const MAX_SAMPLES_COUNT = 1000;
  * @param onDataUpdateCallback
  * @returns {*}
  */
-async function initDatabase(exchangeName, symbol, interval, onDataUpdateCallback) {
+function initDatabase(exchangeName, symbol, interval, onDataUpdateCallback) {
   const monthData = {};
   let lastYear = null;
 
@@ -35,7 +34,7 @@ async function initDatabase(exchangeName, symbol, interval, onDataUpdateCallback
 
 
   fileList.forEach((filePath) => {
-    const json = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+    const json = JSON.parse(fs.readFileSync(`${cwd}/data/${exchangeName}/${symbol}/${filePath}.json`, 'utf-8'));
     json.forEach((record) => {
       Object.assign(record, { time: new Date(record.time) });
     });
@@ -104,7 +103,7 @@ async function initDatabase(exchangeName, symbol, interval, onDataUpdateCallback
 
   if (!fileList.length) {
     EXCHANGES[exchangeName].loadMaxSizeData(
-      prepareData, doneFunction, symbol, interval,
+      prepareData, doneFunction, symbol, interval, null, onDataUpdateCallback,
     );
   } else {
     runUpdateFetch();
@@ -181,6 +180,15 @@ async function initDatabase(exchangeName, symbol, interval, onDataUpdateCallback
 }
 
 /**
+ * @param exchangeName
+ * @param symbol
+ */
+function removeDatabase(exchangeName, symbol) {
+  if (!symbol || !exchangeName) throw new Error(`Empty value: exchangeName="${exchangeName}" symbol="${symbol}"`);
+  fs.rmdirSync(`${cwd}/data/${exchangeName}/${symbol}`, { recursive: true });
+}
+
+/**
  * @param {number} num
  * @returns {string}
  */
@@ -210,10 +218,6 @@ function saveMonthlyDataObjectToFile(exchangeName, symbol, dateName, monthlyData
  */
 function saveToFile(exchangeName, symbol, dateName, monthData) {
   const symbolDateFileName = getSymbolDateFileName(exchangeName, symbol, dateName);
-  // if (fs.existsSync(symbolDateFileName)) {
-  //   throw new Error(`Plik ${symbolDateFileName} już istnieje`);
-  // }
-
   fs.writeFileSync(symbolDateFileName, JSON.stringify(monthData));
 }
 
@@ -225,7 +229,7 @@ function createFilesList(exchangeName, symbol) {
   const url = `${cwd}/data/${exchangeName}/${symbol}`;
   return fs.readdirSync(url)
     .filter(fileName => fileName !== 'list.json')
-    .map(fileName => `${cwd}/data/${exchangeName}/${symbol}/${fileName}`);
+    .map(fileName => fileName.split('.')[0]);
 }
 
 /**
@@ -255,8 +259,6 @@ function getListPath(exchangeName, symbol) {
  */
 function getSymbolDateFileName(exchangeName, symbol, dateName) {
   const symbolPath = getSymbolPath(exchangeName, symbol);
-  // const strMonth = numToStr(date.getMonth() + 1);
-  // return `${symbolPath}/${date.getFullYear()}-${strMonth}.json`;
   return `${symbolPath}/${dateName}.json`;
 }
 
@@ -277,4 +279,7 @@ function getExchangePath(exchangeName) {
   return `${cwd}/data/${exchangeName}`;
 }
 
-module.exports = initDatabase;
+module.exports = {
+  initDatabase,
+  removeDatabase,
+};

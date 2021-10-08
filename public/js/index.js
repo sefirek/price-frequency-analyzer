@@ -9,6 +9,41 @@ import RSI from './RSI';
 import MA from './MA';
 import createSeriesUpsAndDownsDataSet, { createSeriesUpsAndDowns } from './createSeriesUpsAndDownsDataSet';
 
+const selectExchange = document.getElementById('trade-exchange');
+const selectSymbol = document.getElementById('trade-symbol');
+const selectTradeDate = document.getElementById('trade-date');
+
+console.log({ io });
+const connection = io('ws://localhost:3000', { transports: ['websocket'] });
+connection.on('connect', () => {
+  connection.on('reload', () => {
+    window.location.reload();
+  });
+  connection.on('public-chart-data-update', () => {
+    fetchWithSelectInput();
+  });
+  connection.on('getExchangeList', initExchanges);
+  connection.emit('getExchangeList');
+  connection.on('getExchangeCurrencySymbols', (list) => {
+    updateExchangeSymbolsList(list);
+    subscribeExchangeSymbol();
+  });
+  connection.on('generateDatabase', ({ message, error }) => {
+    generateDatabaseContainer.dataset.inProgress = 'false';
+    updateDisabledGenerateButton();
+
+    if (error) {
+      generateInfo.dataset.type = 'error';
+      generateInfo.innerHTML = JSON.stringify(error);
+      return;
+    }
+
+    generateInfo.dataset.type = 'success';
+    generateInfo.innerHTML = message;
+  });
+});
+connection.onmessage = (data) => { console.log(data); };
+
 const {
   Neuron, Layer, Trainer, Network,
 } = synaptic;
@@ -17,51 +52,146 @@ const {
 // testNetwork();
 
 
-waitForUpdate();
-/**
- *
- */
-function waitForUpdate() {
-  fetch('/public-update').then((res) => {
-    if (res.status === 200) window.location.reload();
-  });
-}
-
-
-const grantPermissionsButton = document.querySelector('button[name="grant-permissions"]');
-grantPermissionsButton.addEventListener('click', (event) => {
-  event.preventDefault();
-  Notification.requestPermission((status) => {
-    console.log('Notification status ', status);
-    waitForChartDataUpdate();
-
-    /**
-     *
-     */
-    function waitForChartDataUpdate() {
-      fetch('/public-chart-data-update').then((res) => {
-        if (res.status === 200) {
-          console.log('update data');
-
-          if (Notification.permission === 'granted') {
-            navigator.serviceWorker.ready.then((reg) => {
-              reg.showNotification('Hello world!');
-            }, (error) => {
-              console.log('Service worker registration failed:', error);
-            });
-          }
-
-          fetchWithSelectInput().then(waitForChartDataUpdate);
-        }
-      });
-    }
-  });
-});
-
 const DEFAULT_ADD_TO_CHART_BUTTON = 'Control';
 
 let selectionId = 0;
 const chartScrollbarInput = document.querySelector('.chart-scrollbar > input');
+
+/**
+ * @param list
+ */
+function initExchanges(list) {
+  resetSelectInput(selectExchange, list.sort(), { initValue: selectExchange.value });
+  connection.emit('getExchangeCurrencySymbols', selectExchange.value);
+}
+
+/**
+ * @param select
+ * @param list
+ */
+function resetSelectInput(select, list, { initValue = null, defaultFirst = true } = {}) {
+  const currentOptionIndex = select.selectedIndex;
+  const currentOption = select[currentOptionIndex];
+  while (select.firstElementChild) {
+    select.firstElementChild.remove();
+  }
+
+  list.forEach((data) => {
+    const option = document.createElement('option');
+    option.value = data;
+    option.innerHTML = data;
+    select.append(option);
+  });
+
+  if (currentOptionIndex !== -1) {
+    const selectArr = [...select];
+    const theSameValueOption = selectArr.find(option => option.value === currentOption.value);
+    if (theSameValueOption) {
+      select.value = theSameValueOption.value;
+      return;
+    }
+  }
+
+  if (list.includes(initValue)) {
+    select.value = initValue;
+    return;
+  }
+  const defaultIndex = (defaultFirst ? 0 : select.length - 1);
+  select.value = select[defaultIndex]?.value;
+}
+
+/**
+ * @param list
+ */
+function updateExchangeSymbolsList(list) {
+  resetSelectInput(selectSymbol, list.sort(), { initValue: selectSymbol.value });
+  processSymbolDataUrls({
+    symbol: selectSymbol.value,
+    exchange: selectExchange.value,
+  });
+}
+
+/**
+ *
+ */
+function processSymbolDataUrls({ symbol, exchange }) {
+  getSymbolDataUrls({ symbol, exchange }).then(({ dates, symbol, exchange }) => {
+    console.log('symbol data done');
+
+    // console.log('--BEFORE--');
+    // console.log({
+    //   dates, symbol, exchange, options: [...selectTradeDate].map(option => option.value),
+    // });
+    resetSelectInput(selectTradeDate, dates, {
+      initValue: selectTradeDate.value,
+      defaultFirst: false,
+    });
+    // console.log('--AFTER--');
+    // console.log({
+    //   dates, symbol, exchange, options: [...selectTradeDate].map(option => option.value),
+    // });
+    fetchFromDate(({ date: selectTradeDate.value, symbol, exchange })).then(() => {
+      trainNetwork();
+      runFunc();
+    }).catch(() => {});
+  });
+}
+
+selectTradeDate.addEventListener('change', fetchWithSelectInput);
+
+selectExchange.addEventListener('change', (event) => {
+  const { target } = event;
+  connection.emit('getExchangeCurrencySymbols', target.value);
+});
+
+selectSymbol.addEventListener('change', () => {
+  previousMonth = '';
+  processSymbolDataUrls({
+    symbol: selectSymbol.value,
+    exchange: selectExchange.value,
+  });
+  subscribeExchangeSymbol();
+});
+
+/**
+ *
+ */
+function subscribeExchangeSymbol() {
+  connection.emit('subscribeExchangeSymbol', {
+    exchange: selectExchange.value,
+    symbol: selectSymbol.value,
+  });
+}
+
+const generateDatabaseContainer = document.querySelector('.generate-database-container');
+const generateDatabaseButton = generateDatabaseContainer.querySelector('button[name="generate-database"]');
+const generateSymbolInput = generateDatabaseContainer.querySelector('input[name="generate-symbol"]');
+const generateInfo = generateDatabaseContainer.querySelector('.generate-database-info');
+
+generateDatabaseButton.addEventListener('click', (event) => {
+  event.preventDefault();
+  const { target } = event;
+
+  connection.emit('generateDatabase', {
+    exchange: selectExchange.value,
+    symbol: generateSymbolInput.value,
+  });
+  generateDatabaseContainer.dataset.inProgress = 'true';
+  generateDatabaseButton.disabled = true;
+});
+
+generateSymbolInput.addEventListener('input', () => {
+  if (generateDatabaseContainer.dataset.inProgress !== 'true') {
+    updateDisabledGenerateButton();
+  }
+});
+updateDisabledGenerateButton();
+/**
+ *
+ */
+function updateDisabledGenerateButton() {
+  generateDatabaseButton.disabled = (generateSymbolInput.value.length === 0);
+}
 
 /**
  * @param chart
@@ -237,13 +367,16 @@ const frequencyChartDataUpdater = new DataUpdater();
 const frequencies = new Frequencies();
 
 const period = 288;
-
-const selectTradeDate = document.getElementById('trade-date');
 /**
  *
  */
 function fetchWithSelectInput() {
-  return fetchFromDate(selectTradeDate.value).then(() => {
+  const options = {
+    date: selectTradeDate.value,
+    symbol: selectSymbol.value,
+    exchange: selectExchange.value,
+  };
+  return fetchFromDate(options).then(() => {
     clearTimeout(timeout);
     setTimeout(() => {
       timeout = null;
@@ -257,27 +390,7 @@ function fetchWithSelectInput() {
 let previousMonth = '';
 
 // localStorage.removeItem('network');
-getSymbolDataUrls('TRXUSDT').then((dates) => {
-  selectTradeDate.addEventListener('change', fetchWithSelectInput);
 
-  dates.forEach((date) => {
-    const option = document.createElement('option');
-
-    const jsonSplit = date.replace('.json', '');
-    const realDate = jsonSplit.split('/').pop();
-
-    option.value = realDate;
-    option.innerHTML = realDate;
-    selectTradeDate.append(option);
-  });
-  selectTradeDate.value = selectTradeDate.lastElementChild.value;
-  previousMonth = selectTradeDate.value;
-
-  fetchFromDate(selectTradeDate.value).then(() => {
-    trainNetwork();
-    runFunc();
-  });
-});
 
 let scrollHasOnInput = false;
 let preparedData = null;
@@ -286,8 +399,9 @@ let preparedData = null;
  * @param {string} date format: YYYY-MM
  * @returns {Promise}
  */
-async function fetchFromDate(date) {
-  return fetch(`/data/poloniex/TRXUSDT/${date}.json`, {
+async function fetchFromDate({ date, symbol, exchange }) {
+  if (!date) throw new Error('Nie ma okresów dla tej pary');
+  return fetch(`/data/${exchange}/${symbol}/${date}.json`, {
     mode: 'cors',
   }).then(res => res.json()).then((json) => {
     const priceJson = createPriceJson(json);
@@ -295,18 +409,18 @@ async function fetchFromDate(date) {
     const frequencyJson = createPriceJson(json);
     frequencyChartDataUpdater.setJSONData(frequencyJson);
 
-    const scrollbarValue = Number.parseInt(chartScrollbarInput.value, 10);
-    const oldScrollbarMax = Number.parseInt(chartScrollbarInput.getAttribute('max'), 10);
-
+    const oldValue = chartScrollbarInput.value;
+    const oldMax = chartScrollbarInput.getAttribute('max');
     chartScrollbarInput.setAttribute('min', zoomSize);
     chartScrollbarInput.setAttribute('max', json.length);
 
     if (previousMonth !== selectTradeDate.value) {
-      chartScrollbarInput.value = json.length;
       previousMonth = selectTradeDate.value;
-    } else if (scrollbarValue === oldScrollbarMax) {
-      chartScrollbarInput.value = json.length;
       index = json.length;
+      chartScrollbarInput.value = index;
+    } else if (oldValue === oldMax) {
+      index = json.length;
+      chartScrollbarInput.value = index;
     }
 
     if (!scrollHasOnInput) {
@@ -502,41 +616,24 @@ function trainNetwork({
    *
    */
   async function trainFail() {
+    if (!timeout) return;
+
     const trainer = new Trainer(network);
 
-    if (timeout !== null) {
-      // lastError = 0;
-      // copyDataSet.forEach((d) => {
-      //   lastError += Trainer.cost.MSE(d.output, network.activate(d.input));
-      // });
-      // lastError /= (copyDataSet.length);
+    if (Math.random() < 0.5) network = createNetwork(4, 16, 4);
 
+    trainer.train(dataSet, {
+      rate: Math.random() * 0.2 * Math.random() + Math.random() * 0.8 * Math.random() / 10,
+      iterations: 100,
+      error: 0.005,
+      shuffle: Math.random() > 0.3,
+      log: 0,
+      cost: Trainer.cost.MSE,
+    });
 
-      if (Math.random() < 0.5) network = createNetwork(4, 16, 4);
-
-      trainer.train(dataSet, {
-        rate: Math.random() * 0.2 * Math.random() + Math.random() * 0.8 * Math.random() / 10,
-        iterations: 100,
-        error: 0.005,
-        shuffle: Math.random() > 0.3,
-        log: 0,
-        cost: Trainer.cost.MSE,
-      });
-      // let currentError = 0;
-      // copyDataSet.forEach((d) => {
-      //   currentError += Trainer.cost.MSE(d.output, network.activate(d.input));
-      // });
-      // currentError /= (copyDataSet.length);
-      testNetwork();
-      preparedData.run();
-      // if (currentError < lastError) {
-      //   console.log({ currentError, lastError });
-      //   testNetwork();
-      //   preparedData.run();
-      // }
-      // clearTimeout(timeout);
-      timeout = setTimeout(trainFail, 10);
-    }
+    testNetwork();
+    preparedData.run();
+    timeout = setTimeout(trainFail, 10);
   }
   // localStorage.removeItem('network');
   jsonText = localStorage.getItem('network');
@@ -555,7 +652,8 @@ function trainNetwork({
  * @param json
  */
 function createPriceJson(json) {
-  const copy = JSON.parse(JSON.stringify(json));
+  // const copy = JSON.parse(JSON.stringify(json));
+  const copy = json.map(({ time, close }) => ({ time, close }));
   repairTime(copy);
   return copy;
 }
@@ -642,11 +740,11 @@ function updateDataFunction(id, json) {
  * @param {string} symbol
  * @returns {string[]} urls
  */
-async function getSymbolDataUrls(symbol) {
+async function getSymbolDataUrls({ symbol, exchange }) {
   if (!symbol) throw new Error('You must set SYMBOL');
-  const resolve = await fetch(`/data/binance/${symbol}/list.json`);
-  const json = resolve.json();
-  return json;
+  const resolve = await fetch(`/data/${exchange}/${symbol}/list.json`);
+  const json = await resolve.json();
+  return { dates: json, symbol, exchange };
 }
 
 // -----------------------------------

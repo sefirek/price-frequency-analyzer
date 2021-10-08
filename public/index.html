@@ -5,9 +5,11 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Price frequency analyzer</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/dygraph/2.1.0/dygraph.min.css" />
   <link rel="stylesheet" href="css/index.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/synaptic/1.0.4/synaptic.js" integrity="sha512-t/iCO9KLOIT7UYsr+8yB5ZgmkJ3lmAhzwRfigVAZy9P4sRkEqujnsPvBUFCCOveBUWPm5N0rKKOWMGGK/OmGvw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.js" integrity="sha512-WL6WGKMPBiM9PnHRYIn5YEtq0Z8XP4fkVb4qy7PP4vhmYQErJ/dySyXuFIMDf1eEYCXCrQrMJfkNwKc9gsjTjA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script type="module" src="js/index.js"></script>
 </head>
 <body>
@@ -58,14 +60,27 @@
           <button name="train">Train</button>
           <button name="create-new">Create new</button>
         </div>
-        <div class="date-container">
-          <select name="trade-date" id="trade-date">
-    
+        <div class="trade-data-container">
+          <select name="trade-exchange" id="trade-exchange">
+            
           </select>
+          <select name="trade-symbol" id="trade-symbol">
+            
+          </select>
+          <select name="trade-date" id="trade-date">
+            
+          </select>
+        </div>
+        <div class="generate-database-container">
+          <input type="text" name="generate-symbol" placeholder="symbol" />
+          <button name="generate-database">Generate database</button>
+          <div class="generate-database-status">
+            <i class="fas fa-sync-alt"></i>
+            <div class="generate-database-info"></div>
+          </div>
         </div>
       </div>
     </div>
-    <button name="grant-permissions">Grant permissions</button>
   </main>
 </body>
 </html>
